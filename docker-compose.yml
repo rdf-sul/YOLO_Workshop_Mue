@@ -1,0 +1,65 @@
+services:
+
+  # ── Streamlit App ────────────────────────────────────────────
+  streamlit:
+    build: .
+    image: yolo-bauteile:latest
+    container_name: yolo_streamlit
+    entrypoint: ["streamlit", "run", "yolo_bauteile_app.py",
+                 "--server.address=0.0.0.0",
+                 "--server.port=8501",
+                 "--server.headless=true"]
+    command: []
+    ports:
+      - "8501:8501"
+    volumes:
+      - models:/workspace/models
+      - data:/workspace/data
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # ── Jupyter Notebook ─────────────────────────────────────────
+  jupyter:
+    build: .
+    image: yolo-bauteile:latest
+    container_name: yolo_jupyter
+    entrypoint: ["jupyter", "lab",
+                 "--ip=0.0.0.0",
+                 "--port=8888",
+                 "--no-browser",
+                 "--allow-root",
+                 "--ServerApp.token=",
+                 "--ServerApp.password="]
+    command: []
+    ports:
+      - "8888:8888"
+    volumes:
+      - models:/workspace/models
+      - data:/workspace/data
+      - ./nb0_bilder_vorbereiten_11.ipynb:/workspace/Notebooks/nb0_bilder_vorbereiten_11.ipynb
+      - ./nb0b_bilder_skalieren.ipynb:/workspace/Notebooks/nb0b_bilder_skalieren.ipynb
+      - ./nb1_daten_vorbereiten_23.ipynb:/workspace/Notebooks/nb1_daten_vorbereiten_23.ipynb
+      - ./nb2_yolo11_training_colab_1.ipynb:/workspace/Notebooks/nb2_yolo11_training_colab_1.ipynb
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # ── Label Studio ──────────────────────────────────────────────
+  labelstudio:
+    image: heartexlabs/label-studio:latest
+    container_name: yolo_labelstudio
+    ports:
+      - "8080:8080"
+    volumes:
+      - labelstudio:/label-studio/data
+      - data:/label-studio/files
+    restart: unless-stopped
+    environment:
+      - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
+      - LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT=/label-studio/files
+
+volumes:
+  models:
+  data:
+  labelstudio:
